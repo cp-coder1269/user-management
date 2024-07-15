@@ -6,6 +6,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
 import { CacheModule } from '@nestjs/cache-manager';
+import { BlockUserModule } from './block-user/block-user.module';
+import { BlockUser } from './block-user/entities/block-user.entity';
 import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
@@ -18,7 +20,7 @@ import * as redisStore from 'cache-manager-redis-store';
       username: 'chandraprakashpal',
       entities: [],
       database: 'user_management',
-      entities: [User],
+      entities: [User, BlockUser],
       synchronize: true,
       logging: false,
     }),
@@ -30,7 +32,8 @@ import * as redisStore from 'cache-manager-redis-store';
       ttl: 300000, // 5 minutes
       max: 100,  // maximum number of items in cache
       isGlobal: true
-    })
+    }),
+    BlockUserModule
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -13,7 +13,7 @@ export class UsersController {
   ) {}
 
 
-  @UseInterceptors(CacheInterceptor)
+  // @UseInterceptors(CacheInterceptor)
   @Get('search')
   async searchUsers(@Query() searchUserDto: SearchUserDto): Promise<User[]> {
     // console.log('user searching...', searchUserDto);

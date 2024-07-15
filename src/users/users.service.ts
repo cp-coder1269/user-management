@@ -23,10 +23,13 @@ export class UsersService {
   async searchUsers(searchUserDto: SearchUserDto): Promise<User[]> {
     console.log('searching without cache');
     
-    const { maxAge, minAge, sortBy, sortOrder, username } = searchUserDto;
+    const { maxAge, minAge, sortBy, sortOrder, username, userId } = searchUserDto;
     // console.log("username: ",username, "minAge: ", minAge, "maxAge: ", maxAge, sortBy, sortOrder);
     
-    const queryBuilder = this.userRepository.createQueryBuilder('user');
+    // const queryBuilder = this.userRepository.createQueryBuilder('user');
+    const queryBuilder = this.userRepository.createQueryBuilder('user')
+        .leftJoin('block_users', 'block', 'block.blockId = user.id AND block.userId = :userId', { userId })
+        .where('block.blockId IS NULL');
 
     if (username) {
       queryBuilder.andWhere('user.username LIKE :username', { username: `%${username}%` });

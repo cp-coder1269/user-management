@@ -1,7 +1,12 @@
 import { Type } from "class-transformer";
-import { IsIn, IsInt, IsOptional, IsString, Max, Min } from "class-validator";
+import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class SearchUserDto {
+    @IsNotEmpty()
+    @Type(() => Number)
+    @IsInt()
+    userId: number;
+    
     @IsOptional()
     @IsString()
     username?: string;
@@ -27,4 +32,5 @@ export class SearchUserDto {
     @IsString()
     @IsIn(['ASC', 'DESC'])
     sortOrder?: 'ASC' | 'DESC';
+
 }
