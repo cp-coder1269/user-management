@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { SearchUserDto } from './dto/search-user.dto';
+import { CacheInterceptor } from '@nestjs/cache-manager';
 
 @Controller('users')
 export class UsersController {
@@ -12,9 +13,10 @@ export class UsersController {
   ) {}
 
 
+  @UseInterceptors(CacheInterceptor)
   @Get('search')
   async searchUsers(@Query() searchUserDto: SearchUserDto): Promise<User[]> {
-    console.log('user searching...', searchUserDto);
+    // console.log('user searching...', searchUserDto);
     return this.userService.searchUsers(searchUserDto);
   }
 

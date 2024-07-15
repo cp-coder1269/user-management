@@ -1,5 +1,6 @@
 import {
   HttpException,
+  Inject,
   Injectable,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -8,15 +9,20 @@ import { Repository } from 'typeorm';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { SearchUserDto } from './dto/search-user.dto';
+import { Cache } from 'cache-manager';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
 
 @Injectable()
 export class UsersService {
   constructor(
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) {}
 
   async searchUsers(searchUserDto: SearchUserDto): Promise<User[]> {
+    console.log('searching without cache');
+    
     const { maxAge, minAge, sortBy, sortOrder, username } = searchUserDto;
     // console.log("username: ",username, "minAge: ", minAge, "maxAge: ", maxAge, sortBy, sortOrder);
     
@@ -65,15 +71,20 @@ export class UsersService {
     return await this.userRepository.find();
   }
 
-  async findOne(id: number): Promise<User> {
-    const userData =
-      await this.userRepository.findOneBy({ id });
-    if (!userData) {
-      throw new HttpException(
-        'User Not Found',
-        404,
-      );
+  async findOne(id: number): Promise<User> {  
+    const cachedData = await this.cacheService.get<User>(id.toString());
+    if (cachedData) {
+      return cachedData;
     }
+    
+    console.log('without cache:', id);
+    const userData = await this.userRepository.findOneBy({ id }); 
+    if (!userData) {
+      throw new HttpException('User Not Found', 404);
+    }
+    await this.cacheService.set(id.toString(), userData);
+    // const cd = await this.getData();
+    // console.log('all cached data:', cd);
     return userData;
   }
 
@@ -94,14 +105,27 @@ export class UsersService {
       }
     });
     await this.userRepository.save(userToUpdate);
-  
+    await this.cacheService.del(id.toString());
+
     return userToUpdate;
   }
   
   async remove(id: number): Promise<User> {
     const existingUser = await this.findOne(id);
-    return await this.userRepository.remove(
-      existingUser,
-    );
+    await this.cacheService.del(id.toString());
+    return await this.userRepository.remove(existingUser);
   }
+
+    // util function to fetch all the data from cache
+    async getData() {
+      //Get all keys
+      const keys = await this.cacheService.store.keys();
+    
+      //Loop through keys and get data
+      const allData: { [key: string]: any } = {};
+      for (const key of keys) {
+        allData[key] = await this.cacheService.get(key);
+      }
+      return allData;
+    }
 }
