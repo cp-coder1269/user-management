@@ -11,15 +11,16 @@ fs.readFile('users.json', 'utf8', (err, data) => {
   const users = JSON.parse(data);
 
   // Generate the SQL insert statements
-  let sql = 'INSERT INTO users (name, surname, username, birthdate) VALUES\n';
+  let sql = 'INSERT INTO users (name, surname, username, birthdate, age) VALUES\n';
 
   users.forEach((user, index) => {
     const escapedName = user.name.replace(/'/g, "''");
     const escapedSurname = user.surname.replace(/'/g, "''");
     const escapedUsername = user.username.replace(/'/g, "''");
     const escapedBirthdate = user.birthdate.replace(/'/g, "''");
+    const escapedAge = user.age; // Age is a number, no need to escape
 
-    const values = `('${escapedName}', '${escapedSurname}', '${escapedUsername}', '${escapedBirthdate}')`;
+    const values = `('${escapedName}', '${escapedSurname}', '${escapedUsername}', '${escapedBirthdate}', ${escapedAge})`;
     sql += values;
     if (index < users.length - 1) {
       sql += ',\n';

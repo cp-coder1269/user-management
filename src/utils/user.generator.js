@@ -12,14 +12,29 @@ function generateRandomDate() {
   return `${day}/${month}/${year}`;
 }
 
+// Function to calculate age from birthdate
+function calculateAge(birthdate) {
+  const [day, month, year] = birthdate.split('/');
+  const birthDateObj = new Date(year, month - 1, day);
+  const today = new Date();
+  let age = today.getFullYear() - birthDateObj.getFullYear();
+  const monthDifference = today.getMonth() - birthDateObj.getMonth();
+  if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDateObj.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 // Generate 1000 users
 const users = [];
 for (let i = 0; i < 1000; i++) {
+  const birthdate = generateRandomDate();
   const user = {
     name: faker.name.firstName(),
     surname: faker.name.lastName(),
     username: faker.internet.userName(),
-    birthdate: generateRandomDate()
+    birthdate: birthdate,
+    age: calculateAge(birthdate)
   };
   users.push(user);
 }

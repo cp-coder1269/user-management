@@ -20,4 +20,7 @@ import {
 
     @Column()
     birthdate: string;
+    
+    @Column()
+    age: number;
   }
