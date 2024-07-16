@@ -35,6 +35,7 @@ export class BlockUserService {
             const existingBlockData = await this.blockUserRepository.findOneBy({ userId, blockId });
             if (existingBlockData) {
                 await this.blockUserRepository.remove(existingBlockData);
+                return Promise.resolve(`user:${userId} has unblocked user:${blockId}`);
             }
         });
         return Promise.all(promises);

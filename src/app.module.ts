@@ -30,7 +30,7 @@ import * as redisStore from 'cache-manager-redis-store';
       store: redisStore,
       host: 'localhost',
       port: 6379,
-      ttl: 15000, // 5 minutes
+      ttl: 300000, // 5 minutes
       max: 100,  // maximum number of items in cache
       isGlobal: true
     }),
