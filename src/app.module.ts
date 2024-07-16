@@ -8,6 +8,7 @@ import { User } from './users/entities/user.entity';
 import { CacheModule } from '@nestjs/cache-manager';
 import { BlockUserModule } from './block-user/block-user.module';
 import { BlockUser } from './block-user/entities/block-user.entity';
+import { AuthModule } from './auth/auth.module';
 import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
@@ -29,11 +30,12 @@ import * as redisStore from 'cache-manager-redis-store';
       store: redisStore,
       host: 'localhost',
       port: 6379,
-      ttl: 300000, // 5 minutes
+      ttl: 15000, // 5 minutes
       max: 100,  // maximum number of items in cache
       isGlobal: true
     }),
-    BlockUserModule
+    BlockUserModule,
+    AuthModule
   ],
   controllers: [AppController],
   providers: [AppService],

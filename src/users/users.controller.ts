@@ -1,10 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, UseInterceptors, UseGuards, Req } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
 import { SearchUserDto } from './dto/search-user.dto';
-import { CacheInterceptor } from '@nestjs/cache-manager';
+import { Public } from 'src/auth/public.decorator';
+import { Request } from 'express';
 
 @Controller('users')
 export class UsersController {
@@ -15,11 +16,13 @@ export class UsersController {
 
   // @UseInterceptors(CacheInterceptor)
   @Get('search')
-  async searchUsers(@Query() searchUserDto: SearchUserDto): Promise<User[]> {
-    // console.log('user searching...', searchUserDto);
-    return this.userService.searchUsers(searchUserDto);
+  async searchUsers(@Query() searchUserDto: SearchUserDto, @Req() req: Request): Promise<User[]> {
+    const userId = req.auth_user.sub;
+    return this.userService.searchUsers(userId, searchUserDto);
   }
 
+
+  @Public()
   @Post()
   async create(
     @Body() createUserDto: CreateUserDto,
@@ -41,6 +44,7 @@ export class UsersController {
     }
   }
 
+  @Public()
   @Get()
   async findAll() {
     // return "calling all users";

@@ -1,24 +1,29 @@
 // block-user.controller.ts
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+// @ts-nocheck
+import { Controller, Get, Post, Body, Param, Req } from '@nestjs/common';
 import { BlockUserService } from './block-user.service';
 import { CreateBlockUserDto } from './dto/create-block-user.dto';
+import { Request } from 'express';
 
 @Controller('block-user')
 export class BlockUserController {
     constructor(private readonly blockUserService: BlockUserService) {}
 
     @Post('/block')
-    async block(@Body() createBlockUserDto: CreateBlockUserDto) {
-        return await this.blockUserService.block(createBlockUserDto);
+    async block(@Body() createBlockUserDto: CreateBlockUserDto, @Req() req: Request) {
+        const userId = req?.auth_user?.sub;
+        return await this.blockUserService.block(userId, createBlockUserDto);
     }
 
     @Post('/unblock')
-    async unblock(@Body() createBlockUserDto: CreateBlockUserDto) {
-        return await this.blockUserService.unblock(createBlockUserDto);
+    async unblock(@Body() createBlockUserDto: CreateBlockUserDto, @Req() req: Request) {
+        const userId = req.auth_user.sub;
+        return await this.blockUserService.unblock(userId, createBlockUserDto);
     }
 
-    @Get('/:id')
-    async findAll(@Param('id') id: number) {
-        return await this.blockUserService.findAll(id);
+    @Get()
+    async findAll(@Req() req: Request) {
+        const userId = req.auth_user.sub;
+        return await this.blockUserService.findAll(userId);
     }
 }

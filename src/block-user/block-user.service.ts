@@ -12,8 +12,8 @@ export class BlockUserService {
         private readonly blockUserRepository: Repository<BlockUser>,
     ) {}
 
-    async block(createBlockUserDto: CreateBlockUserDto) {
-      const { userId, blockIds } = createBlockUserDto;
+    async block(userId:number, createBlockUserDto: CreateBlockUserDto) {
+      const { blockIds } = createBlockUserDto;
     
       const promises = blockIds.map(async (blockId) => {
         const existingBlockData = await this.blockUserRepository.findOne({ where: { userId, blockId } });
@@ -29,8 +29,8 @@ export class BlockUserService {
       return Promise.all(promises);
     }
 
-    async unblock(createBlockUserDto: CreateBlockUserDto) {
-        const { userId, blockIds } = createBlockUserDto;
+    async unblock(userId:number, createBlockUserDto: CreateBlockUserDto) {
+        const { blockIds } = createBlockUserDto;
         const promises = blockIds.map(async (blockId) => {
             const existingBlockData = await this.blockUserRepository.findOneBy({ userId, blockId });
             if (existingBlockData) {

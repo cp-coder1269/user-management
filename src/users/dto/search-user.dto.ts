@@ -2,11 +2,7 @@ import { Type } from "class-transformer";
 import { IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Max, Min } from "class-validator";
 
 export class SearchUserDto {
-    @IsNotEmpty()
-    @Type(() => Number)
-    @IsInt()
-    userId: number;
-    
+
     @IsOptional()
     @IsString()
     username?: string;

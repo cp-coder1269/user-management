@@ -20,13 +20,21 @@ export class UsersService {
     @Inject(CACHE_MANAGER) private cacheService: Cache,
   ) {}
 
-  async searchUsers(searchUserDto: SearchUserDto): Promise<User[]> {
-    console.log('searching without cache');
+  async searchUsers(userId:number, searchUserDto: SearchUserDto): Promise<User[]> {
+    let {username, maxAge, minAge, sortBy, sortOrder } = searchUserDto;
+    sortBy = sortBy ?? 'id';
+    sortOrder = sortOrder ?? 'ASC';
+    const cache_key = `users:${userId}:${username}:${minAge}:${maxAge}:${sortBy}:${sortOrder}`;
+
+    // const cachedData = await this.cacheService.get<User[]>(cache_key);
+    // if (cachedData) {
+    //   console.log(`searching from cache for ${cache_key}`);
+    //   return cachedData;
+    // }
+
+
+    console.log(`searching without cache for ${cache_key}`);
     
-    const { maxAge, minAge, sortBy, sortOrder, username, userId } = searchUserDto;
-    // console.log("username: ",username, "minAge: ", minAge, "maxAge: ", maxAge, sortBy, sortOrder);
-    
-    // const queryBuilder = this.userRepository.createQueryBuilder('user');
     const queryBuilder = this.userRepository.createQueryBuilder('user')
         .leftJoin('block_users', 'block', 'block.blockId = user.id AND block.userId = :userId', { userId })
         .where('block.blockId IS NULL');
@@ -47,7 +55,12 @@ export class UsersService {
       queryBuilder.orderBy(`user.${sortBy}`, sortOrder || 'ASC');
     }
 
-    return queryBuilder.getMany();
+    const searchData =  await queryBuilder.getMany();
+    if (!searchData) {
+      throw new HttpException('User Not Found', 404);
+    }
+    await this.cacheService.set(cache_key, searchData);
+    return searchData;
   }
 
   private calculateAge(birthdate: string): number {
@@ -75,19 +88,35 @@ export class UsersService {
   }
 
   async findOne(id: number): Promise<User> {  
-    const cachedData = await this.cacheService.get<User>(id.toString());
-    if (cachedData) {
-      return cachedData;
-    }
+    // const cachedData = await this.cacheService.get<User>(id.toString());
+    // if (cachedData) {
+    //   return cachedData;
+    // }
     
+
     console.log('without cache:', id);
     const userData = await this.userRepository.findOneBy({ id }); 
     if (!userData) {
       throw new HttpException('User Not Found', 404);
     }
     await this.cacheService.set(id.toString(), userData);
-    // const cd = await this.getData();
-    // console.log('all cached data:', cd);
+
+    return userData;
+  }
+  async findByUsername(username: string): Promise<User> {  
+    const cachedData = await this.cacheService.get<User>(username);
+    if (cachedData) {
+      console.log('with cache username:', username);
+      return cachedData;
+    }
+
+
+    console.log('without cache username:', username);
+    const userData = await this.userRepository.findOneBy({ username }); 
+    if (!userData) {
+      throw new HttpException('User Not Found', 404);
+    }
+    await this.cacheService.set(username, userData);
     return userData;
   }
 
@@ -109,6 +138,7 @@ export class UsersService {
     });
     await this.userRepository.save(userToUpdate);
     await this.cacheService.del(id.toString());
+    await this.cacheService.del(userToUpdate.username);
 
     return userToUpdate;
   }
@@ -116,19 +146,7 @@ export class UsersService {
   async remove(id: number): Promise<User> {
     const existingUser = await this.findOne(id);
     await this.cacheService.del(id.toString());
+    await this.cacheService.del(existingUser.username);
     return await this.userRepository.remove(existingUser);
   }
-
-    // util function to fetch all the data from cache
-    async getData() {
-      //Get all keys
-      const keys = await this.cacheService.store.keys();
-    
-      //Loop through keys and get data
-      const allData: { [key: string]: any } = {};
-      for (const key of keys) {
-        allData[key] = await this.cacheService.get(key);
-      }
-      return allData;
-    }
 }
