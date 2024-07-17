@@ -1,41 +1,49 @@
-// @ts-nocheck
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { CacheModule } from '@nestjs/cache-manager';
+import * as redisStore from 'cache-manager-redis-store';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
-import { CacheModule } from '@nestjs/cache-manager';
 import { BlockUserModule } from './block-user/block-user.module';
 import { BlockUser } from './block-user/entities/block-user.entity';
 import { AuthModule } from './auth/auth.module';
-import * as redisStore from 'cache-manager-redis-store';
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      host: '127.0.0.1',
-      port: 5432,
-      password: '',
-      username: 'chandraprakashpal',
-      entities: [],
-      database: 'user_management',
-      entities: [User, BlockUser],
-      synchronize: true,
-      logging: false,
+    ConfigModule.forRoot({ isGlobal: true }), // Ensure ConfigModule is global
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        type: 'postgres',
+        host: configService.get<string>('DB_HOST'),
+        port: configService.get<number>('DB_PORT'),
+        username: configService.get<string>('DB_USERNAME'),
+        password: configService.get<string>('DB_PASSWORD'),
+        database: configService.get<string>('DB_DATABASE'),
+        entities: [User, BlockUser],
+        synchronize: configService.get<boolean>('DB_SYNCHRONIZE', true),
+        logging: configService.get<boolean>('DB_LOGGING', false),
+      }),
+      inject: [ConfigService],
+    }),
+    CacheModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (configService: ConfigService) => ({
+        store: redisStore,
+        host: configService.get<string>('CACHE_HOST'),
+        port: configService.get<number>('CACHE_PORT'),
+        ttl: configService.get<number>('CACHE_TTL'),
+        max: configService.get<number>('CACHE_MAX'),
+      }),
+      inject: [ConfigService],
+      isGlobal: true,
     }),
     UsersModule,
-    CacheModule.register({
-      store: redisStore,
-      host: 'localhost',
-      port: 6379,
-      ttl: 300000, // 5 minutes
-      max: 100,  // maximum number of items in cache
-      isGlobal: true
-    }),
     BlockUserModule,
-    AuthModule
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
